@@ -39,7 +39,12 @@ export function frameMetrics(video: HTMLVideoElement) {
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
   let lum = 0, edges = 0;
   for (let i = 0; i < data.length; i += 4) { const v = data[i] * .299 + data[i + 1] * .587 + data[i + 2] * .114; lum += v; if (i >= 4) edges += Math.abs(v - (data[i - 4] * .299 + data[i - 3] * .587 + data[i - 2] * .114)); }
-  return { brightness: lum / (data.length / 4), sharpness: edges / (data.length / 4), signature: lum / 1000 + edges / 100 };
+  const pixelCount = data.length / 4;
+  const brightness = lum / pixelCount;
+  const sharpness = edges / pixelCount;
+  // Use per-pixel values only. The old total-edge signature scaled with every
+  // pixel in the preview and made normal sensor noise appear as large motion.
+  return { brightness, sharpness, signature: brightness / 1000 + sharpness / 100 };
 }
 export const isImageBrightEnough = (brightness: number) => brightness > 32 && brightness < 248;
 export const isImageSharpEnough = (sharpness: number) => sharpness > 2.2;
