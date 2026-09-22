@@ -15,3 +15,25 @@ export function extractName(text: string) {
 }
 export function extractAddress(text: string) { const lines = text.split(/\r?\n/).map(compact).filter(Boolean); const at = lines.findIndex((line) => /address|s\/o|d\/o|c\/o|w\/o/i.test(line)); return at >= 0 ? lines.slice(at, at + 4).join(", ").replace(/^address\s*:?/i, "").trim() || null : null; }
 export function isLikelyAadhaar(text: string) { return /aadhaar|uidai|government\s+of\s+india|unique\s+identification/i.test(text) && (!!extractAadhaarNumber(text) || /dob|date\s+of\s+birth|address/i.test(text)); }
+
+export type AadhaarSide = "front" | "back" | "unknown";
+
+/** A local OCR heuristic; it prevents accidental side swaps but is not official verification. */
+export function classifyAadhaarSide(text: string): AadhaarSide {
+  const value = text.toLowerCase().replace(/\s+/g, " ");
+  const hasNumber = Boolean(extractAadhaarNumber(text));
+  const frontScore =
+    Number(/\b(dob|date of birth|year of birth)\b/.test(value)) +
+    Number(/\b(male|female|transgender)\b/.test(value)) +
+    Number(/government of india|unique identification authority|uidai/.test(value)) +
+    Number(hasNumber);
+  const backScore =
+    Number(/\baddress\b/.test(value)) +
+    Number(/\b[sdcw]\s*\/\s*o\b/.test(value)) +
+    Number(/\b(pin|pincode|postal code)\b/.test(value)) +
+    Number(/\b\d{6}\b/.test(value));
+
+  if (frontScore >= 2 && frontScore > backScore) return "front";
+  if (backScore >= 2 && backScore >= frontScore) return "back";
+  return "unknown";
+}
