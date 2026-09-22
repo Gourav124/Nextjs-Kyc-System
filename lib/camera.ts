@@ -41,6 +41,6 @@ export function frameMetrics(video: HTMLVideoElement) {
   for (let i = 0; i < data.length; i += 4) { const v = data[i] * .299 + data[i + 1] * .587 + data[i + 2] * .114; lum += v; if (i >= 4) edges += Math.abs(v - (data[i - 4] * .299 + data[i - 3] * .587 + data[i - 2] * .114)); }
   return { brightness: lum / (data.length / 4), sharpness: edges / (data.length / 4), signature: lum / 1000 + edges / 100 };
 }
-export const isImageBrightEnough = (brightness: number) => brightness > 55 && brightness < 235;
-export const isImageSharpEnough = (sharpness: number) => sharpness > 7;
-export const isImageStable = (previous: number, current: number) => Math.abs(previous - current) < .18;
+export const isImageBrightEnough = (brightness: number) => brightness > 32 && brightness < 248;
+export const isImageSharpEnough = (sharpness: number) => sharpness > 2.2;
+export const isImageStable = (previous: number, current: number) => Math.abs(previous - current) < .55;
