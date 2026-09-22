@@ -1,0 +1,1 @@
+export function StepIndicator({ active }: { active: 1 | 2 | 3 }) { const labels = ["Aadhaar front", "Aadhaar back", "Selfie"]; return <div className="steps" aria-label={`Step ${active} of 3`}>{labels.map((label, i) => <div className={`step ${i + 1 <= active ? "active" : ""}`} key={label}><span>{i + 1}</span><small>{label}</small></div>)}</div>; }

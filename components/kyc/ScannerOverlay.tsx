@@ -1,0 +1,1 @@
+export function ScannerOverlay({ kind, message }: { kind: "document" | "selfie"; message: string }) { return <div className={`overlay ${kind}`}><div className="scan-copy">{message}</div><div className="guide">{kind === "document" ? <span>AADHAAR CARD</span> : <span className="face-dot" />}</div></div>; }

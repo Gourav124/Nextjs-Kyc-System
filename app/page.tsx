@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function Home() { return <main className="landing"><div className="landing-card"><span className="eyebrow">PRIVATE ON-DEVICE CHECK</span><h1>Verify your identity with confidence.</h1><p>Scan your Aadhaar card and take a selfie. Your images stay in this browser session.</p><Link className="primary-link" href="/kyc">Start verification <span>→</span></Link><small>This is a document-scanning prototype, not official Aadhaar verification.</small></div></main>; }

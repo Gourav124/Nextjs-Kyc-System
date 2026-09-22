@@ -1,0 +1,17 @@
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { asCameraError, captureFrame, openCamera, stopCamera, type CameraError } from "@/lib/camera";
+import { createFaceDetector, inspectFace } from "@/lib/faceDetector";
+import { ScannerOverlay } from "./ScannerOverlay";
+
+export function SelfieScanner({ onComplete }: { onComplete: (image: string) => void }) {
+  const video = useRef<HTMLVideoElement>(null), stream = useRef<MediaStream | null>(null), raf = useRef<number | undefined>(undefined), detector = useRef<Awaited<ReturnType<typeof createFaceDetector>> | null>(null), stable = useRef(0), locked = useRef(false);
+  const [error, setError] = useState<CameraError | "face" | null>(null), [hint, setHint] = useState("Loading face detection…");
+  const start = useCallback(async () => { stopCamera(stream.current); locked.current = false; stable.current = 0; setError(null); try { stream.current = await openCamera("user"); if (video.current) { video.current.srcObject = stream.current; await video.current.play(); } detector.current ??= await createFaceDetector(); setHint("Place your face inside the circle"); } catch (e) { const cameraError = asCameraError(e); setError(cameraError === "permission" ? "permission" : "face"); } }, []);
+  useEffect(() => { start(); return () => { if (raf.current) cancelAnimationFrame(raf.current); stopCamera(stream.current); detector.current?.close(); detector.current = null; }; }, [start]);
+  useEffect(() => { if (error) return; let lastTime = 0; const detect = () => { const v = video.current, d = detector.current; if (!v || !d || v.readyState < 3 || locked.current) { raf.current = requestAnimationFrame(detect); return; } const now = performance.now(); if (now - lastTime < 90) { raf.current = requestAnimationFrame(detect); return; } lastTime = now; const check = inspectFace(d.detectForVideo(v, now), v.videoWidth, v.videoHeight);
+    if (check.count === 0) { stable.current = 0; setHint("Place your face inside the circle"); } else if (check.count > 1) { stable.current = 0; setHint("Only one person should be visible"); } else if (!check.closeEnough) { stable.current = 0; setHint("Move closer"); } else if (!check.centered) { stable.current = 0; setHint("Center your face"); } else { stable.current += 1; setHint(stable.current >= 7 ? "Hold still — capturing…" : "Great — hold still"); }
+    if (stable.current >= 12) { locked.current = true; const image = captureFrame(v); stopCamera(stream.current); onComplete(image); return; } raf.current = requestAnimationFrame(detect); }; raf.current = requestAnimationFrame(detect); return () => { if (raf.current) cancelAnimationFrame(raf.current); }; }, [error, onComplete]);
+  if (error) return <div className="camera-error"><div className="error-icon">!</div><h2>{error === "permission" ? "Camera permission is required" : "We couldn’t detect your face"}</h2><p>{error === "permission" ? "Please allow camera access in browser settings and try again." : "Make sure the local MediaPipe model is available and position your face inside the circle."}</p><button className="button" onClick={start}>Try Again</button></div>;
+  return <section className="scanner selfie-scanner"><video ref={video} muted playsInline className="camera-video mirror" /><ScannerOverlay kind="selfie" message="Align your face inside the circle" /><div className="scanner-status"><span className="pulse" />{hint}</div><p className="privacy-note">Face detection and capture happen on-device.</p></section>;
+}

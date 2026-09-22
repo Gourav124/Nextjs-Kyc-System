@@ -1,0 +1,1 @@
+export function OcrResult({ progress }: { progress: number }) { return <div className="processing"><div className="spinner" /><h2>Analyzing Aadhaar…</h2><p>Reading the document securely on this device.</p><div className="progress"><i style={{ width: `${Math.max(8, progress)}%` }} /></div><b>{progress}%</b></div>; }
